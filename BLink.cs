@@ -7,22 +7,23 @@ namespace BScan
 {
     class BLink
     {
+        public readonly string Name = "";
+        public readonly string Url = "";
+
         private IUIAutomation _automation;
         private IUIAutomationElement _element;
-        private string _name;
-        private string _url;
 
         public static BLink Create(IUIAutomation automation, IUIAutomationElement element)
         {
             BLink link = new BLink(automation, element);
-            if ((link._name != null) && (link._url != null))
+            if ((link.Name != null) && (link.Url != null))
             {
-                string url = link._url.ToLower();
-                if (url.IndexOf("bing.com/") > 0)
+                string url = link.Url.ToLower();
+                if (url.IndexOf(Const.SearchPattern) > 0)
                 {
-                    return link;
+                    if (link._element != null)
+                        return link;
                 }
-
             }
             return null;
         }
@@ -38,7 +39,7 @@ namespace BScan
             if ((strNameFound != null) && (strNameFound.Trim().Length > 0))
             {
                 // We have a usable name.
-                _name = strNameFound.Trim();
+                Name = strNameFound.Trim();
             }
             else
             {
@@ -58,7 +59,7 @@ namespace BScan
                     if ((strNameChild != null) && (strNameChild.Trim().Length > 0))
                     {
                         // Use the name of this child element.
-                        _name = strNameChild.Trim();
+                        Name = strNameChild.Trim();
                         break;
                     }
 
@@ -67,17 +68,43 @@ namespace BScan
                 }
             }
             
-            
             IUIAutomationValuePattern valuePattern = (IUIAutomationValuePattern)element.GetCurrentPattern(Const.PatternIdValue);
             if (valuePattern != null)
             {
-                _url = valuePattern.CurrentValue;
+                Url = valuePattern.CurrentValue;
+            }
+
+            // If this link has both the innerText (name) and url, save it
+            if (Name.Length > 0 && Url.Length > 0)
+            {
+                _element = element;
             }
         }
 
         public override string ToString()
         {
-            return _name + "\r\n  ( " + _url + " )";
+            return Name + "\r\n  ( " + Url + " )";
+        }
+
+        public bool Invoke()
+        {
+            if (_element != null)
+            {
+                IUIAutomationInvokePattern pattern = (IUIAutomationInvokePattern)_element.GetCurrentPattern(Const.PatternIdInvoke);
+                if (pattern != null)
+                {
+                    try
+                    {
+                        pattern.Invoke();
+                        return true;
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(@"Invoke failed: {0}", e.Message);
+                    }
+                }
+            }
+            return false;
         }
     }
 }

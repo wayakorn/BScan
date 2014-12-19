@@ -14,7 +14,11 @@ namespace BScan
             IUIAutomation automation = new CUIAutomation();
 
             IntPtr hwnd = Win32.FindWindow("IEFrame", null);
-            if (hwnd != IntPtr.Zero)
+            if (hwnd == IntPtr.Zero)
+            {
+                Console.WriteLine(@"Cannot find IEFrame");
+            }
+            else
             {
                 IUIAutomationElement ie = automation.ElementFromHandle(hwnd);
                 if (ie != null)
